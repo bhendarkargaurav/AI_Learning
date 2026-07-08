@@ -10,10 +10,6 @@ const client = new OpenAI({
 
 
 
-// const client = new OpenAI({
-//     apiKey: process.env.OPENAI_API_KEY,
-// })
-
 //Tools
 
 function getWeatherDetails(city = '') {
@@ -24,6 +20,7 @@ function getWeatherDetails(city = '') {
     if(city.toLowerCase() === 'delhi') return '12°c';
 }
 
+//Tool Registry
 const tools = {
     "getWeatherDetails": getWeatherDetails 
 }
@@ -39,7 +36,7 @@ Strictly follow the JSON output format as in example
 
 Available Tools:
 - Function getWeatherDetails(city: String): string
-getWeatherDetails is a function that accepts city name as string and return the weatehr details.
+getWeatherDetails is a function that accepts city name as string and return the weather details.
 
 
 Example:
@@ -56,27 +53,29 @@ START
 
 const messages = [{ role: 'system', content: SYSTEM_PROMPT }];
 
+
+//heart of agent continue taking the input
 while(true) {
     const query = readlineSync.question('>> ');
-   const q = {
-    type: 'user',
-    user: query,
-};
+    const q = {
+       type: 'user',
+       user: query,
+    };
+
     messages.push({ role: 'user', content: JSON.stringify(q) });
 
     while(true) {
-        const chat = await client.chat.completions.create({
+        const chat = await client.chat.completions.create({  //calling gpt
             model: "gpt-4o",
             messages: messages,
             response_format: {type: 'json_object'},
         })
 
-      
-
         const result = chat.choices[0].message.content;
+
         messages.push({role: 'assistant', content: result });
 
-          console.log(`\n\n-------------------Start AI----------------`);
+        console.log(`\n\n-------------------Start AI----------------`);
         console.log(result);
         console.log(`-------------------End AI----------------\n\n`)
 
@@ -90,7 +89,7 @@ while(true) {
             const fn = tools[call.function] 
             const observation = fn(call.input);
             const obs = {"type": "observation", "observation": observation}
-    messages.push({role: "developer", content: JSON.stringify(obs)});            
+            messages.push({role: "developer", content: JSON.stringify(obs)});            
         }
     }
 }
